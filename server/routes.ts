@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from "node-fetch";
 import { z } from "zod";
+import { WebSocketServer, WebSocket } from "ws";
 import { 
   insertDiscordBotSchema, 
   insertDiscordUserSchema, 
@@ -392,5 +393,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create HTTP server
   const httpServer = createServer(app);
+  
+  // Set up WebSocket server for real-time updates
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store connected clients
+  const clients = new Set<WebSocket>();
+  
+  wss.on('connection', (ws) => {
+    console.log('New WebSocket connection established');
+    clients.add(ws);
+    
+    // Send initial connection message
+    ws.send(JSON.stringify({
+      type: 'connection',
+      message: 'Connected to Discord message relay',
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Handle messages from client
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('Received WebSocket message:', data);
+        
+        // Handle different types of messages
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({
+            type: 'pong',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+      clients.delete(ws);
+    });
+  });
+  
+  // Helper function to broadcast to all connected clients
+  const broadcastMessage = (message: any) => {
+    const messageStr = JSON.stringify(message);
+    clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageStr);
+      }
+    });
+  };
+  
+  // Add a middleware to broadcast DM responses
+  app.post('/api/discord/message-received', async (req: Request, res: Response) => {
+    const messageSchema = z.object({
+      userId: z.string(),
+      content: z.string(),
+      username: z.string(),
+      timestamp: z.string().optional(),
+      botId: z.string()
+    });
+    
+    try {
+      const messageData = messageSchema.parse(req.body);
+      
+      // Broadcast the received message to all connected clients
+      broadcastMessage({
+        type: 'message',
+        data: messageData,
+        timestamp: messageData.timestamp || new Date().toISOString()
+      });
+      
+      // Store the message in history
+      await storage.saveMessageHistory({
+        botId: messageData.botId,
+        content: messageData.content,
+        sentAt: messageData.timestamp || new Date().toISOString(),
+        recipientCount: 1,
+        isReply: true,
+        senderInfo: {
+          userId: messageData.userId,
+          username: messageData.username
+        }
+      });
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error processing message:', error);
+      res.status(400).json({ 
+        success: false, 
+        message: error instanceof z.ZodError 
+          ? 'Invalid input data'
+          : 'Failed to process message',
+        details: error instanceof z.ZodError
+          ? error.errors
+          : (error as Error).message
+      });
+    }
+  });
+  
   return httpServer;
 }

@@ -28,10 +28,12 @@ export default function Home() {
         
         {/* Main Content */}
         <main className="flex flex-col md:flex-row gap-6 flex-grow overflow-hidden">
-          <TokenSetupCard onShowError={() => setShowErrorModal(true)} />
+          <div className="md:w-1/4 flex-shrink-0">
+            <TokenSetupCard onShowError={() => setShowErrorModal(true)} />
+          </div>
           
           {/* Main Workspace */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="md:w-3/4 flex flex-col overflow-hidden">
             <Tabs defaultValue="user-selection" className="flex-1 flex flex-col">
               <TabsList className="border-b border-border mb-4 justify-start">
                 <TabsTrigger value="user-selection">User Selection</TabsTrigger>
@@ -40,10 +42,10 @@ export default function Home() {
               </TabsList>
               
               <TabsContent value="user-selection" className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
-                <div className="md:w-[45%] flex-shrink-0 overflow-hidden flex flex-col h-[calc(100vh-220px)]">
+                <div className="md:w-2/5 flex-shrink-0 overflow-hidden flex flex-col h-[calc(100vh-220px)]">
                   <UserList />
                 </div>
-                <div className="md:w-[55%] flex-shrink-0 overflow-auto flex flex-col h-[calc(100vh-220px)]">
+                <div className="md:w-3/5 flex-shrink-0 overflow-auto flex flex-col h-[calc(100vh-220px)]">
                   <MessageComposer />
                 </div>
               </TabsContent>

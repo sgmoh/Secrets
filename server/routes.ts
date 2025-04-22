@@ -32,21 +32,49 @@ async function validateDiscordToken(token: string) {
   }
 }
 
-// Helper function to fetch guild members from Discord API
-async function fetchGuildMembers(token: string, guildId: string) {
+// Helper function to fetch guild members from Discord API with pagination
+async function fetchGuildMembers(token: string, guildId: string, limit = 1000) {
   try {
-    const response = await fetch(`${DISCORD_API_URL}/guilds/${guildId}/members?limit=1000`, {
-      headers: {
-        Authorization: `Bot ${token}`,
-      },
-    });
+    let allMembers: any[] = [];
+    let after = null;
+    let hasMore = true;
+    
+    // Use pagination to get all members efficiently
+    while (hasMore && allMembers.length < limit) {
+      const url = new URL(`${DISCORD_API_URL}/guilds/${guildId}/members`);
+      url.searchParams.append('limit', '100'); // API allows max 100 per request
+      if (after) url.searchParams.append('after', after);
+      
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bot ${token}`,
+        },
+      });
 
-    if (!response.ok) {
-      return { success: false, status: response.status, statusText: response.statusText };
+      if (!response.ok) {
+        return { 
+          success: false, 
+          status: response.status, 
+          statusText: response.statusText 
+        };
+      }
+
+      const data = await response.json();
+      if (data.length === 0) {
+        hasMore = false;
+      } else {
+        allMembers = [...allMembers, ...data];
+        // Get last member ID for pagination
+        after = data[data.length - 1].user.id;
+      }
+      
+      // If we've hit our limit, stop paginating
+      if (allMembers.length >= limit) {
+        hasMore = false;
+      }
     }
 
-    const data = await response.json();
-    return { success: true, members: data };
+    return { success: true, members: allMembers };
   } catch (error) {
     return { success: false, error: (error as Error).message };
   }
@@ -174,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 2. Fetch users from Discord servers
+  // 2. Fetch users from Discord servers with improved performance
   app.get('/api/discord/users', async (req: Request, res: Response) => {
     const botIdSchema = z.object({
       botId: z.string().min(1),
@@ -192,54 +220,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Fetch guilds (servers) the bot is in
-      const guildsResult = await fetchGuilds(bot.token);
+      // First return any cached users we already have
+      // This makes the UI responsive immediately
+      const cachedUsers = await storage.getUsersByBotId(botId);
       
-      if (!guildsResult.success) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Failed to fetch guilds', 
-          details: guildsResult 
-        });
-      }
-
-      // Fetch members from all guilds
-      const allMembers = [];
-      for (const guild of guildsResult.guilds) {
-        const membersResult = await fetchGuildMembers(bot.token, guild.id);
-        if (membersResult.success) {
-          allMembers.push(...membersResult.members);
-        }
-      }
-
-      // Process and save unique users
-      const uniqueUsers = new Map();
-      for (const member of allMembers) {
-        if (member.user && !member.user.bot) { // Skip bots
-          const user = member.user;
-          if (!uniqueUsers.has(user.id)) {
-            uniqueUsers.set(user.id, {
-              id: user.id,
-              username: user.username,
-              displayName: user.global_name || member.nick || user.username,
-              avatarUrl: user.avatar 
-                ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` 
-                : null,
-              status: 'online', // Default status
-              botId: botId,
-            });
+      // Start fetching fresh data in the background
+      (async () => {
+        try {
+          // Fetch guilds (servers) the bot is in
+          const guildsResult = await fetchGuilds(bot.token);
+          
+          if (!guildsResult.success) {
+            console.error('Failed to fetch guilds:', guildsResult);
+            return;
           }
+
+          // Fetch members from all guilds in parallel for speed
+          const memberPromises = guildsResult.guilds.map(guild => 
+            fetchGuildMembers(bot.token, guild.id)
+          );
+          
+          // Wait for all member requests to complete
+          const membersResults = await Promise.all(memberPromises);
+          
+          // Collect all successful results
+          const allMembers = [];
+          for (const result of membersResults) {
+            if (result.success) {
+              allMembers.push(...result.members);
+            }
+          }
+
+          // Process and save unique users
+          const uniqueUsers = new Map();
+          for (const member of allMembers) {
+            if (member.user && !member.user.bot) { // Skip bots
+              const user = member.user;
+              if (!uniqueUsers.has(user.id)) {
+                uniqueUsers.set(user.id, {
+                  id: user.id,
+                  username: user.username,
+                  displayName: user.global_name || member.nick || user.username,
+                  avatarUrl: user.avatar 
+                    ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` 
+                    : null,
+                  status: 'online', // Default status
+                  botId: botId,
+                });
+              }
+            }
+          }
+
+          // Save users to storage
+          const users = Array.from(uniqueUsers.values());
+          await storage.saveUsers(users as any);
+          
+          console.log(`Background fetch completed: ${users.length} users found`);
+        } catch (error) {
+          console.error('Error in background fetch:', error);
         }
-      }
+      })();
 
-      // Save users to storage
-      const users = Array.from(uniqueUsers.values());
-      await storage.saveUsers(users as any);
-
+      // Return immediately with cached users for responsiveness
       return res.status(200).json({ 
         success: true, 
-        message: 'Users fetched successfully', 
-        users 
+        message: 'Users retrieved (fresh data is being fetched in background)', 
+        users: cachedUsers
       });
     } catch (error) {
       return res.status(400).json({ 

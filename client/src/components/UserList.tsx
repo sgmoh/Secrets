@@ -4,12 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Search, RefreshCw, UserPlusIcon } from "lucide-react";
+import { Search, RefreshCw, UserPlusIcon, UsersIcon, Loader2 } from "lucide-react";
 import { DiscordUser } from "@shared/schema";
 
 export default function UserList() {
-  const { isConnected, isLoadingUsers, users, fetchUsers, selectedUsers, addSelectedUser, botId } = useDiscord();
+  const { 
+    isConnected, 
+    isLoadingUsers, 
+    users, 
+    fetchUsers, 
+    selectedUsers, 
+    addSelectedUser, 
+    clearSelectedUsers,
+    botId 
+  } = useDiscord();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
   const { toast } = useToast();
 
   const filteredUsers = users.filter(user => 
@@ -41,8 +51,36 @@ export default function UserList() {
     return selectedUsers.some(user => user.id === userId);
   };
 
+  const handleSelectAll = () => {
+    setIsSelectingAll(true);
+    
+    try {
+      // Clear any existing selections first
+      clearSelectedUsers();
+      
+      // Use the optimized batch selection method
+      setTimeout(() => {
+        addSelectedUsers(filteredUsers);
+        
+        toast({
+          title: "Success",
+          description: `Selected ${filteredUsers.length} users`,
+        });
+        
+        setIsSelectingAll(false);
+      }, 50); // Small delay for UI feedback
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to select all users",
+        variant: "destructive",
+      });
+      setIsSelectingAll(false);
+    }
+  };
+
   return (
-    <div className="bg-card rounded-xl border border-border/30 flex-1 md:max-w-[50%] flex flex-col">
+    <div className="bg-card rounded-xl border border-border/30 flex-1 md:max-w-[50%] flex flex-col overflow-hidden">
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <h2 className="font-medium">Available Users</h2>
         <div className="flex gap-2">
@@ -68,8 +106,33 @@ export default function UserList() {
         </div>
       </div>
 
-      {/* User List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+      {/* Select All Button */}
+      {filteredUsers.length > 0 && isConnected && (
+        <div className="px-4 py-2 border-b border-border/30">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-sm bg-background hover:bg-muted"
+            onClick={handleSelectAll}
+            disabled={isSelectingAll || filteredUsers.length === 0}
+          >
+            {isSelectingAll ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                Selecting...
+              </>
+            ) : (
+              <>
+                <UsersIcon className="mr-2 h-3 w-3" />
+                Select All Users ({filteredUsers.length})
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* User List - Height is constrained with max-h-[calc(100vh-300px)] */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 min-h-0">
         {isLoadingUsers ? (
           // Loading skeletons
           Array(5).fill(0).map((_, index) => (

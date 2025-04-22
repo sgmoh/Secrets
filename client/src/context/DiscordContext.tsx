@@ -25,6 +25,7 @@ interface DiscordContextType {
   disconnect: () => void;
   fetchUsers: (botId: string) => Promise<void>;
   addSelectedUser: (user: DiscordUser) => void;
+  addSelectedUsers: (users: DiscordUser[]) => void;
   removeSelectedUser: (userId: string) => void;
   clearSelectedUsers: () => void;
 }
@@ -43,6 +44,7 @@ const DiscordContext = createContext<DiscordContextType>({
   disconnect: () => {},
   fetchUsers: async () => {},
   addSelectedUser: () => {},
+  addSelectedUsers: () => {},
   removeSelectedUser: () => {},
   clearSelectedUsers: () => {},
 });
@@ -157,10 +159,25 @@ export function DiscordProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Optimized version - batch update for better performance
   const addSelectedUser = (user: DiscordUser) => {
     if (!selectedUsers.some(u => u.id === user.id)) {
       setSelectedUsers(prev => [...prev, user]);
     }
+  };
+
+  // Optimized for batch selection
+  const addSelectedUsers = (usersToAdd: DiscordUser[]) => {
+    if (!usersToAdd.length) return;
+    
+    setSelectedUsers(prev => {
+      // Filter out users that are already selected
+      const newUsers = usersToAdd.filter(user => 
+        !prev.some(u => u.id === user.id)
+      );
+      
+      return [...prev, ...newUsers];
+    });
   };
 
   const removeSelectedUser = (userId: string) => {
@@ -187,6 +204,7 @@ export function DiscordProvider({ children }: { children: ReactNode }) {
         disconnect,
         fetchUsers,
         addSelectedUser,
+        addSelectedUsers,
         removeSelectedUser,
         clearSelectedUsers,
       }}

@@ -35,7 +35,7 @@ export default function Home() {
             <Tabs defaultValue="user-selection" className="flex-1 flex flex-col">
               <TabsList className="border-b border-border mb-4 justify-start">
                 <TabsTrigger value="user-selection">User Selection</TabsTrigger>
-                <TabsTrigger value="message-history">Message History</TabsTrigger>
+                <TabsTrigger value="replies">Replies</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
               
@@ -44,9 +44,9 @@ export default function Home() {
                 <MessageComposer />
               </TabsContent>
               
-              <TabsContent value="message-history" className="h-full">
+              <TabsContent value="replies" className="h-full">
                 <div className="flex items-center justify-center h-full bg-card/50 rounded-xl border border-border">
-                  <p className="text-muted-foreground">Message history will be shown here</p>
+                  <p className="text-muted-foreground">User replies will be shown here</p>
                 </div>
               </TabsContent>
               

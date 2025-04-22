@@ -327,10 +327,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       botId: z.string().min(1),
       userIds: z.array(z.string()).min(1),
       content: z.string().min(1),
+      messageDelay: z.number().int().min(0).max(10000).optional().default(0), // Delay in ms between messages
     });
 
     try {
-      const { botId, userIds, content } = sendMessageSchema.parse(req.body);
+      const { botId, userIds, content, messageDelay } = sendMessageSchema.parse(req.body);
       
       // Get bot from storage
       const bot = await storage.getBot(botId);
@@ -346,6 +347,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let successCount = 0;
       
       for (const userId of userIds) {
+        // Add delay between messages if specified
+        if (messageDelay > 0 && results.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, messageDelay));
+        }
+        
         const result = await sendDirectMessage(bot.token, userId, content);
         results.push({
           userId,

@@ -81,7 +81,7 @@ export default function UserList() {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border/30 w-full h-full flex flex-col overflow-hidden">
+    <div className="bg-card rounded-xl border border-border/30 w-full h-[calc(100vh-180px)] flex flex-col overflow-hidden">
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <h2 className="font-medium">Available Users</h2>
         <div className="flex gap-2">

@@ -39,12 +39,31 @@ export default function Home() {
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="user-selection" className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
-                <div className="md:w-[45%] flex-shrink-0 overflow-hidden flex flex-col h-[calc(100vh-220px)]">
-                  <UserList />
+              <TabsContent value="user-selection" className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden max-h-[calc(100vh-180px)]">
+                {/* On mobile, we'll show tabs for both panels */}
+                <div className="block md:hidden w-full">
+                  <Tabs defaultValue="users" className="w-full">
+                    <TabsList className="w-full grid grid-cols-2 mb-4">
+                      <TabsTrigger value="users">Select Users</TabsTrigger>
+                      <TabsTrigger value="compose">Compose Message</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="users" className="h-[calc(100vh-240px)]">
+                      <UserList />
+                    </TabsContent>
+                    <TabsContent value="compose" className="h-[calc(100vh-240px)]">
+                      <MessageComposer />
+                    </TabsContent>
+                  </Tabs>
                 </div>
-                <div className="md:w-[55%] flex-shrink-0 overflow-auto flex flex-col h-[calc(100vh-220px)]">
-                  <MessageComposer />
+                
+                {/* On desktop, we'll show both panels side by side */}
+                <div className="hidden md:flex w-full gap-4">
+                  <div className="w-[45%] flex-shrink-0 overflow-hidden">
+                    <UserList />
+                  </div>
+                  <div className="w-[55%] flex-shrink-0">
+                    <MessageComposer />
+                  </div>
                 </div>
               </TabsContent>
               
@@ -71,7 +90,7 @@ export default function Home() {
         <TokenErrorModal
           isOpen={showErrorModal}
           onClose={() => setShowErrorModal(false)}
-          errorDetails={errorDetails}
+          errorDetails={errorDetails || undefined}
         />
       )}
     </>

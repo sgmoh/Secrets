@@ -131,7 +131,7 @@ export default function MessageComposer() {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border/30 w-full h-full flex flex-col">
+    <div className="bg-card rounded-xl border border-border/30 w-full h-[calc(100vh-180px)] flex flex-col relative">
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <h2 className="font-medium">Message Compose</h2>
       </div>
@@ -175,7 +175,7 @@ export default function MessageComposer() {
       </div>
 
       {/* Message Input Box */}
-      <div className="flex-1 flex flex-col p-4">
+      <div className="flex-1 flex flex-col p-4 overflow-y-auto custom-scrollbar">
         <Textarea
           placeholder="Type your message here... The message will be sent to all selected users."
           className="w-full h-32 p-3 bg-background border border-border/30 rounded-md resize-none text-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none mb-4 custom-scrollbar"
@@ -261,68 +261,71 @@ export default function MessageComposer() {
           </Button>
         </div>
 
-        {/* Send Controls */}
-        <div className="flex justify-between items-center mt-auto">
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="p-2 rounded-md hover:bg-muted transition-colors"
-              title="Schedule message"
-            >
-              <Clock className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="p-2 rounded-md hover:bg-muted transition-colors"
-              title="Save as draft"
-            >
-              <Save className="h-4 w-4" />
-            </Button>
-          </div>
+        {/* This is needed to provide space for the fixed footer */}
+        <div className="pb-16"></div>
+      </div>
+      
+      {/* Fixed Send Controls Footer */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-card border-t border-border/30 flex justify-between items-center rounded-b-xl">
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="p-2 rounded-md hover:bg-muted transition-colors"
+            title="Schedule message"
+          >
+            <Clock className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="p-2 rounded-md hover:bg-muted transition-colors"
+            title="Save as draft"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="px-4 py-2 rounded-md bg-background hover:bg-muted transition-colors text-sm font-medium"
-            >
-              Preview
-            </Button>
-            <div className="flex flex-col gap-1 items-end">
-              {sendMessageMutation.isPending && selectedUsers.length > 5 && messageDelay > 0 && (
-                <div className="flex flex-col w-full items-end mb-1">
-                  <div className="flex justify-between w-full text-xs mb-1">
-                    <span className="text-muted-foreground">Sending messages...</span>
-                    <span className="font-medium">{sendProgress}%</span>
-                  </div>
-                  <Progress value={sendProgress} className="w-[200px] h-1.5" />
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="px-4 py-2 rounded-md bg-background hover:bg-muted transition-colors text-sm font-medium"
+          >
+            Preview
+          </Button>
+          <div className="flex flex-col gap-1 items-end">
+            {sendMessageMutation.isPending && selectedUsers.length > 5 && messageDelay > 0 && (
+              <div className="flex flex-col w-full items-end mb-1">
+                <div className="flex justify-between w-full text-xs mb-1">
+                  <span className="text-muted-foreground">Sending messages...</span>
+                  <span className="font-medium">{sendProgress}%</span>
                 </div>
+                <Progress value={sendProgress} className="w-[200px] h-1.5" />
+              </div>
+            )}
+            
+            <Button
+              className="px-4 py-2 rounded-md transition-colors text-sm font-medium flex items-center gap-2"
+              onClick={handleSendMessage}
+              disabled={
+                sendMessageMutation.isPending || 
+                !isConnected || 
+                selectedUsers.length === 0 || 
+                !message.trim()
+              }
+            >
+              {sendMessageMutation.isPending ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-opacity-50 border-t-transparent rounded-full"></div>
+                  <span>Sending{selectedUsers.length > 5 && messageDelay > 0 ? ` (${sendProgress}%)` : '...'}</span>
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  <span>Send Message</span>
+                </>
               )}
-              
-              <Button
-                className="px-4 py-2 rounded-md transition-colors text-sm font-medium flex items-center gap-2"
-                onClick={handleSendMessage}
-                disabled={
-                  sendMessageMutation.isPending || 
-                  !isConnected || 
-                  selectedUsers.length === 0 || 
-                  !message.trim()
-                }
-              >
-                {sendMessageMutation.isPending ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-opacity-50 border-t-transparent rounded-full"></div>
-                    <span>Sending{selectedUsers.length > 5 && messageDelay > 0 ? ` (${sendProgress}%)` : '...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    <span>Send Message</span>
-                  </>
-                )}
-              </Button>
-            </div>
+            </Button>
           </div>
         </div>
       </div>

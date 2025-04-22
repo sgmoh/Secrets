@@ -31,9 +31,18 @@ export default function RepliesSection() {
   // Query to fetch message history
   const { data: messageHistory, isLoading, refetch } = useQuery({
     queryKey: ['/api/discord/message-history', botId],
-    queryFn: async () => {
-      if (!botId) return { messages: [] };
-      return apiRequest<{ messages: MessageReply[] }>(`/api/discord/message-history/${botId}`);
+    queryFn: async ({ queryKey }) => {
+      if (!botId) return { success: true, messages: [] };
+      try {
+        const response = await apiRequest(`/api/discord/message-history/${botId}`);
+        if (response && typeof response === 'object') {
+          return { success: true, messages: response.messages || [] };
+        }
+        return { success: true, messages: [] };
+      } catch (error) {
+        console.error("Error fetching message history:", error);
+        return { success: false, messages: [] };
+      }
     },
     enabled: !!botId && isConnected,
   });

@@ -15,6 +15,7 @@ export default function UserList() {
     fetchUsers, 
     selectedUsers, 
     addSelectedUser, 
+    addSelectedUsers,
     clearSelectedUsers,
     botId 
   } = useDiscord();
@@ -131,8 +132,8 @@ export default function UserList() {
         </div>
       )}
 
-      {/* User List - Height is constrained with max-h-[calc(100vh-300px)] */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 min-h-0">
+      {/* User List with fixed height to prevent jumping */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 min-h-0 h-[calc(100vh-280px)]">
         {isLoadingUsers ? (
           // Loading skeletons
           Array(5).fill(0).map((_, index) => (
@@ -153,46 +154,49 @@ export default function UserList() {
             {searchQuery ? 'No users match your search' : 'No users found'}
           </div>
         ) : (
-          filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="flex items-center p-2 rounded-md hover:bg-muted/30 cursor-pointer mb-1 group"
-            >
-              <div className="flex-shrink-0">
-                <div className="relative">
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={`${user.username} profile`}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      {user.username.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <span className={`absolute bottom-0 right-0 w-3 h-3 ${user.status === 'online' ? 'bg-green-500' : user.status === 'idle' ? 'bg-yellow-500' : 'bg-gray-500'} rounded-full border-2 border-card`}></span>
+          // Add a container div that doesn't fluctuate in size
+          <div className="h-full">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center p-2 rounded-md hover:bg-muted/30 cursor-pointer mb-1 group"
+              >
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={`${user.username} profile`}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        {user.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className={`absolute bottom-0 right-0 w-3 h-3 ${user.status === 'online' ? 'bg-green-500' : user.status === 'idle' ? 'bg-yellow-500' : 'bg-gray-500'} rounded-full border-2 border-card`}></span>
+                  </div>
+                </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="font-medium truncate">{user.username}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.displayName || user.username}
+                  </p>
+                </div>
+                <div className={`${isUserSelected(user.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="p-1.5 rounded-md bg-background hover:bg-muted text-sm transition-colors"
+                    onClick={() => addSelectedUser(user)}
+                    disabled={isUserSelected(user.id)}
+                  >
+                    <UserPlusIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-              <div className="ml-3 flex-1 min-w-0">
-                <p className="font-medium truncate">{user.username}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user.displayName || user.username}
-                </p>
-              </div>
-              <div className={`${isUserSelected(user.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="p-1.5 rounded-md bg-background hover:bg-muted text-sm transition-colors"
-                  onClick={() => addSelectedUser(user)}
-                  disabled={isUserSelected(user.id)}
-                >
-                  <UserPlusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

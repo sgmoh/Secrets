@@ -17,7 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function MessageComposer() {
   const [message, setMessage] = useState("");
-  const { isConnected, selectedUsers, removeSelectedUser, botId } = useDiscord();
+  const { isConnected, selectedUsers, removeSelectedUser, clearSelectedUsers, botId } = useDiscord();
   const { toast } = useToast();
 
   const sendMessageMutation = useMutation({
@@ -93,47 +93,43 @@ export default function MessageComposer() {
     <div className="bg-card rounded-xl border border-border/30 flex-1 flex flex-col">
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <h2 className="font-medium">Message Compose</h2>
-        <div className="flex items-center gap-1 text-sm px-3 py-1 bg-background rounded-full">
-          <span className="text-primary">{selectedUsers.length}</span>
-          <span className="text-muted-foreground">recipients selected</span>
-        </div>
       </div>
 
-      {/* Selected Users List */}
-      <div className="p-4 border-b border-border/30 overflow-x-auto flex gap-2 min-h-16 items-center">
+      {/* Selected Users Count */}
+      <div className="p-4 border-b border-border/30 flex items-center justify-between min-h-16">
         {selectedUsers.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm italic">
+          <div className="flex-1 text-center text-muted-foreground text-sm italic">
             No users selected. Add users from the list to send a message.
           </div>
         ) : (
-          selectedUsers.map((user) => (
-            <div
-              key={user.id}
-              className="flex items-center gap-2 px-3 py-1.5 bg-background rounded-full"
-            >
-              {user.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.username}
-                  className="w-6 h-6 rounded-full"
-                />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs">
-                  {user.username.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="text-sm">{user.username}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-5 w-5 p-0 rounded-full hover:bg-muted"
-                onClick={() => removeSelectedUser(user.id)}
-              >
-                <span className="sr-only">Remove</span>
-                ×
-              </Button>
+          <>
+            <div className="flex items-center">
+              <div className="bg-primary/10 text-primary font-semibold px-4 py-2 rounded-md mr-3">
+                {selectedUsers.length} 
+                <span className="ml-1 text-sm font-normal">
+                  {selectedUsers.length === 1 ? 'recipient' : 'recipients'} selected
+                </span>
+              </div>
+              
+              {/* Summary of first few recipients */}
+              <div className="text-sm text-muted-foreground">
+                Sending to: 
+                <span className="ml-1 font-medium">
+                  {selectedUsers.slice(0, 3).map(user => user.username).join(', ')}
+                  {selectedUsers.length > 3 ? ` and ${selectedUsers.length - 3} more...` : ''}
+                </span>
+              </div>
             </div>
-          ))
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs p-2 rounded-md hover:bg-destructive/10 hover:text-destructive"
+              onClick={clearSelectedUsers}
+            >
+              Clear All
+            </Button>
+          </>
         )}
       </div>
 

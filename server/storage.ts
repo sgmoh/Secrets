@@ -79,10 +79,18 @@ export class MemStorage implements IStorage {
 
   // Message History operations
   async saveMessageHistory(message: InsertMessageHistory): Promise<MessageHistory> {
+    // Process senderInfo to convert object to string if needed
+    let processedMessage = { ...message };
+    
+    if (message.senderInfo && typeof message.senderInfo === 'object') {
+      processedMessage.senderInfo = JSON.stringify(message.senderInfo);
+    }
+    
     const newMessage: MessageHistory = {
-      ...message,
+      ...processedMessage,
       id: this.currentMessageId++
     };
+    
     this.messages.push(newMessage);
     return newMessage;
   }

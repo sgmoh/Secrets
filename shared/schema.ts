@@ -27,6 +27,8 @@ export const messageHistory = pgTable("message_history", {
   content: text("content").notNull(),
   sentAt: text("sent_at").notNull(),
   recipientCount: integer("recipient_count").notNull(),
+  isReply: boolean("is_reply").default(false),
+  senderInfo: text("sender_info").notNull().default('{}'), // Stored as JSON string
 });
 
 // Insert schemas
@@ -42,7 +44,10 @@ export type DiscordBot = typeof discordBots.$inferSelect;
 export type InsertDiscordBot = z.infer<typeof insertDiscordBotSchema>;
 
 export type MessageHistory = typeof messageHistory.$inferSelect;
-export type InsertMessageHistory = z.infer<typeof insertMessageHistorySchema>;
+export type InsertMessageHistory = z.infer<typeof insertMessageHistorySchema> & {
+  isReply?: boolean;
+  senderInfo?: string | { userId: string; username: string; };
+};
 
 // Discord API types
 export type ApiDiscordUser = {

@@ -321,6 +321,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // 3.5. Get message history by bot ID
+  app.get('/api/discord/message-history/:botId', async (req: Request, res: Response) => {
+    try {
+      const { botId } = req.params;
+      
+      // Get message history from storage
+      const messages = await storage.getMessageHistoryByBotId(botId);
+      
+      return res.status(200).json({ 
+        success: true, 
+        messages 
+      });
+    } catch (error) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to get message history',
+        details: (error as Error).message
+      });
+    }
+  });
 
   // 4. Send bulk direct messages
   app.post('/api/discord/send-messages', async (req: Request, res: Response) => {
@@ -473,10 +494,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sentAt: messageData.timestamp || new Date().toISOString(),
         recipientCount: 1,
         isReply: true,
-        senderInfo: {
+        senderInfo: JSON.stringify({
           userId: messageData.userId,
           username: messageData.username
-        }
+        })
       });
       
       res.status(200).json({ success: true });

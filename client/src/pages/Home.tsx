@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import TokenSetupCard from "@/components/TokenSetupCard";
 import UserList from "@/components/UserList";
 import MessageComposer from "@/components/MessageComposer";
+import RepliesSection from "@/components/RepliesSection";
 import Footer from "@/components/Footer";
 import TokenErrorModal from "@/components/TokenErrorModal";
 import { useDiscord } from "@/context/DiscordContext";
@@ -68,9 +69,7 @@ export default function Home() {
               </TabsContent>
               
               <TabsContent value="replies" className="h-full">
-                <div className="flex items-center justify-center h-full bg-card/50 rounded-xl border border-border">
-                  <p className="text-muted-foreground">User replies will be shown here</p>
-                </div>
+                <RepliesSection />
               </TabsContent>
               
               <TabsContent value="settings" className="h-full">

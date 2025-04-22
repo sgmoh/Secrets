@@ -32,7 +32,7 @@ export default function TokenSetupCard({ onShowError }: TokenSetupCardProps) {
   };
 
   return (
-    <div className="bg-card rounded-xl p-5 shadow-lg border border-border/30 w-full flex-shrink-0">
+    <div className="bg-card rounded-xl p-5 shadow-lg border border-border/30 md:w-[350px] flex-shrink-0">
       <h2 className="text-lg font-semibold mb-4">Bot Connection</h2>
       <div className="space-y-4">
         <div>

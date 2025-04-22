@@ -40,8 +40,12 @@ export default function Home() {
               </TabsList>
               
               <TabsContent value="user-selection" className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
-                <UserList />
-                <MessageComposer />
+                <div className="md:w-[45%] flex-shrink-0 overflow-hidden flex flex-col h-[calc(100vh-220px)]">
+                  <UserList />
+                </div>
+                <div className="md:w-[55%] flex-shrink-0 overflow-auto flex flex-col h-[calc(100vh-220px)]">
+                  <MessageComposer />
+                </div>
               </TabsContent>
               
               <TabsContent value="replies" className="h-full">

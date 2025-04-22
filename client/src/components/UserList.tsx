@@ -81,7 +81,7 @@ export default function UserList() {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border/30 flex-1 md:max-w-[50%] flex flex-col overflow-hidden">
+    <div className="bg-card rounded-xl border border-border/30 w-full h-full flex flex-col overflow-hidden">
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <h2 className="font-medium">Available Users</h2>
         <div className="flex gap-2">
@@ -132,8 +132,8 @@ export default function UserList() {
         </div>
       )}
 
-      {/* User List with fixed height to prevent jumping */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 min-h-0 h-[calc(100vh-280px)]">
+      {/* User List with flex-1 to fill available space */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 min-h-0">
         {isLoadingUsers ? (
           // Loading skeletons
           Array(5).fill(0).map((_, index) => (

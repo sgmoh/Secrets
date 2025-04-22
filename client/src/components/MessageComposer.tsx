@@ -131,7 +131,7 @@ export default function MessageComposer() {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border/30 flex-1 flex flex-col">
+    <div className="bg-card rounded-xl border border-border/30 w-full h-full flex flex-col">
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <h2 className="font-medium">Message Compose</h2>
       </div>
